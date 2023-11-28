@@ -1,0 +1,165 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+# https://github.com/snyk/snyk-azure-pipelines-task
+# https://marketplace.visualstudio.com/items?itemName=AquaSecurityOfficial.trivy-official
+
+trigger:
+- master
+
+variables:
+  # trivyVersion: 0.37.1
+  tag: '$(Build.BuildNumber)'
+  imageName: 'alienke/pygoat'
+
+pool:
+  vmImage: ubuntu-latest
+
+stages:
+- stage: Build
+  displayName: Build, Scan and Push image
+  jobs:
+  - job: Tests
+    displayName: SAST Tests
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - script: |
+        export DOCKLE_HOST="unix:///var/run/docker.sock"
+      # required by trivy scan using docker image 
+      displayName: Setting up docker env
+    
+    - script: |
+        env
+      displayName: Printing env
+    
+    - script: |
+        echo Running dependency-check-1.
+        # docker run --rm -v $(pwd):/src hysnsec/safety check -r /src/requirements.txt
+        docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v $HOME/Library/Caches:/root/.cache/ -v $(pwd):/src aquasec/trivy fs --exit-code 1 --severity HIGH,CRITICAL --ignore-unfixed .
+      displayName: Dependency-check
+      continueOnError: true
+    # - task: trivy@1
+    #   inputs:
+    #     path: .
+    #   displayName: Dependency-check-1
+    #   continueOnError: true
+    
+    # - script: |
+    #     echo Running dependency-check-2.
+    #     npm install snyk -g
+    #     pip3 install -r requirements.txt
+    #     export SNYK_TOKEN=$(SNYK_TOKEN)
+    #     snyk test --severity-threshold=high
+    #     # docker run --rm -e SNYK_TOKEN=$(SNYK_TOKEN) -v "$(pwd):/project" snyk/snyk-cli:docker test --packages-folder=/project/requirements.txt --severity-threshold=high
+    #   displayName: Dependency-check-2
+    #   continueOnError: true
+    
+    - task: SnykSecurityScan@1
+      displayName: Dependency-check-2
+      inputs:
+        serviceConnectionEndpoint: 'snyk-auth'
+        testType: 'app'
+        severityThreshold: 'high'
+        failOnIssues: true
+        failOnThreshold: 'high'
+        monitorWhen: 'never'
+      continueOnError: true
+
+    - script: |
+        echo Running IaC.
+        docker run --rm -w /src -v $(pwd):/src bridgecrew/checkov -d /src
+      displayName: Infra-as-Code
+      continueOnError: true
+
+    - script: |
+        echo Running SAST.
+        docker run --user $(id -u):$(id -g) -v $(pwd):/src --rm hysnsec/bandit -r /src
+      displayName: SAST-bandit
+      continueOnError: true
+
+    # - script: |
+    #     echo Running SAST.
+    #     # docker run --rm -e SNYK_TOKEN=$(SNYK_TOKEN) -v "$(pwd):/project" snyk/snyk-cli:docker code test --severity-threshold=high
+    #     npm install snyk -g
+    #     pip3 install -r requirements.txt
+    #     export SNYK_TOKEN=$(SNYK_TOKEN)
+    #     snyk code test --severity-threshold=high
+    #   displayName: SAST-snyk
+    #   continueOnError: true
+    
+    - task: SnykSecurityScan@1
+      inputs:
+        serviceConnectionEndpoint: 'snyk-auth'
+        testType: 'code'
+        codeSeverityThreshold: 'high'
+        failOnThreshold: 'high'
+        failOnIssues: true
+        monitorWhen: 'never'
+      displayName: SAST-snyk
+      continueOnError: true
+    
+    - script: |
+        env
+      displayName: Printing env
+
+  - job: Build
+    dependsOn: Tests
+    condition: succeeded()
+    displayName: Build, Scan and Push
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - script: |
+        export DOCKLE_HOST="unix:///var/run/docker.sock"
+      # required by trivy scan using docker image 
+      displayName: Setting up docker env 
+
+    - task: Docker@2
+      displayName: Build an image
+      inputs:
+        containerRegistry: 'Docker-alienke'
+        repository: '$(imageName)'
+        command: 'build'
+        Dockerfile: '**/Dockerfile'
+        buildContext: '$(Build.SourcesDirectory)/'
+        tags: '$(tag)'
+    
+    - task: SnykSecurityScan@1
+      displayName: Container-scanning-1
+      inputs:
+        serviceConnectionEndpoint: 'snyk-auth'
+        testType: 'container'
+        dockerImageName: '$(imageName):$(tag)'
+        dockerfilePath: 'Dockerfile'
+        failOnIssues: true
+        monitorWhen: 'never'
+      continueOnError: true
+    
+    # - task: trivy@1
+    #   inputs:
+    #     image: $(imageName):$(tag)
+    #   displayName: Container-scanning-2
+    #   # continueOnError: true
+    - task: CmdLine@2
+      displayName: Container-scanning-2
+      inputs:
+        script: |
+         # docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v $HOME/Library/Caches:/root/.cache/ aquasec/trivy image --severity MEDIUM,HIGH --ignore-unfixed $(imageName):$(tag)
+         docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v $HOME/Library/Caches:/root/.cache/ aquasec/trivy image --exit-code 1 --severity HIGH,CRITICAL --ignore-unfixed $(imageName):$(tag)
+      # continueOnError: true
+    - task: Docker@2
+      displayName: Push image
+      condition: succeeded()
+      # condition: succeededOrFailed()
+      # condition: eq(variables['task.Dependency-check.status'], 'success')
+      inputs:
+        containerRegistry: 'Docker-alienke'
+        repository: '$(imageName)'
+        command: 'push'
+        tags: '$(tag)'
+    
+    - script: |
+        env
+      displayName: Printing env
