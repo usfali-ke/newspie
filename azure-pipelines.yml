@@ -46,26 +46,28 @@ stages:
     #   displayName: Dependency-check-1
     #   continueOnError: true
     
-    # - script: |
-    #     echo Running dependency-check-2.
-    #     npm install snyk -g
-    #     pip3 install -r requirements.txt
-    #     export SNYK_TOKEN=$(SNYK_TOKEN)
-    #     snyk test --severity-threshold=high
-    #     # docker run --rm -e SNYK_TOKEN=$(SNYK_TOKEN) -v "$(pwd):/project" snyk/snyk-cli:docker test --packages-folder=/project/requirements.txt --severity-threshold=high
-    #   displayName: Dependency-check-2
-    #   continueOnError: true
-    
-    - task: SnykSecurityScan@1
+    - script: |
+        echo Running dependency-check-2.
+        npm install snyk -g
+        pip3 install -r requirements.txt
+        export SNYK_TOKEN=$env:MY_MAPPED_ENV_VAR
+        snyk test --severity-threshold=high
+        # docker run --rm -e SNYK_TOKEN=$(SNYK_TOKEN) -v "$(pwd):/project" snyk/snyk-cli:docker test --packages-folder=/project/requirements.txt --severity-threshold=high
+      env:
+        MY_MAPPED_ENV_VAR: $(sny-token)
       displayName: dependency-check-2
-      inputs:
-        serviceConnectionEndpoint: 'snyk-auth'
-        testType: 'app'
-        severityThreshold: 'high'
-        failOnIssues: true
-        failOnThreshold: 'high'
-        monitorWhen: 'never'
       continueOnError: true
+    
+    # - task: SnykSecurityScan@1
+    #   displayName: dependency-check-2
+    #   inputs:
+    #     serviceConnectionEndpoint: 'snyk-auth'
+    #     testType: 'app'
+    #     severityThreshold: 'high'
+    #     failOnIssues: true
+    #     failOnThreshold: 'high'
+    #     monitorWhen: 'never'
+    #   continueOnError: true
 
     - script: |
         echo Running IaC.
