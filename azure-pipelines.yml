@@ -137,6 +137,7 @@ stages:
         dockerfilePath: 'Dockerfile'
         failOnIssues: true
         monitorWhen: 'never'
+        additionalArguments: '--fail-on=all'
       continueOnError: true
     
     # - task: trivy@1
