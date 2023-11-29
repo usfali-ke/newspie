@@ -11,7 +11,7 @@ trigger:
 variables:
   # trivyVersion: 0.37.1
   tag: '$(Build.BuildNumber)'
-  imageName: 'alienke/pygoat'
+  imageName: 'alienke/newspie'
 
 pool:
   vmImage: ubuntu-latest
