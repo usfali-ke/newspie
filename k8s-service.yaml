@@ -1,0 +1,17 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  creationTimestamp: null
+  labels:
+    app: newspie
+  name: newspie
+spec:
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 5000
+    nodePort: 30652
+  selector:
+    app: newspie
+  type: NodePort
