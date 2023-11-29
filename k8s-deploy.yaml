@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: newspie
+  name: newspie
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: newspie
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: newspie
+    spec:
+      containers:
+      - image: alienke/newspie:latest
+        name: newspie
+        env:
+        - name: NEWS_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: newspie
+              key: NEWS_API_KEY
