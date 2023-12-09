@@ -32,3 +32,5 @@ A minimalistic news aggregator built with [Flask](https://www.palletsprojects.co
 - [Pico.css](https://github.com/picocss/pico)
 - [requests](https://github.com/psf/requests)
 - [requests-cache](https://github.com/reclosedev/requests-cache)
+
+[![Build Status](https://dev.azure.com/usfali/newspie/_apis/build/status%2Fusfali-ke.newspie?branchName=master)](https://dev.azure.com/usfali/newspie/_build/latest?definitionId=8&branchName=master)
