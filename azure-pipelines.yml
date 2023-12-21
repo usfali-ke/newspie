@@ -46,24 +46,24 @@ stages:
     #   displayName: Dependency-check-1
     #   continueOnError: true
 
-    - task: AzureKeyVault@2
-      inputs:
-        azureSubscription: 'Azure subscription 1(f0c4e8d3-d953-48bf-9fb4-5844e5f44bed)'
-        KeyVaultName: 'alienkv'
-        SecretsFilter: '*'
-        RunAsPreJob: false
+    # - task: AzureKeyVault@2
+    #   inputs:
+    #     azureSubscription: 'Azure subscription 1(f0c4e8d3-d953-48bf-9fb4-5844e5f44bed)'
+    #     KeyVaultName: 'alienkv'
+    #     SecretsFilter: '*'
+    #     RunAsPreJob: false
 
     - script: |
         echo Running dependency-check-2.
-        # npm install snyk -g
-        # pip3 install -r requirements.txt
-        # export SNYK_TOKEN=$env:MY_MAPPED_ENV_VAR
-        # snyk test --severity-threshold=high
-        docker run --rm -e SNYK_TOKEN=$(snyk-token) -v "$(pwd):/project" snyk/snyk-cli:docker test --packages-folder=/project/requirements.txt --severity-threshold=high
-      # env:
-      #   MY_MAPPED_ENV_VAR: $(sny-token)
-      # displayName: dependency-check-2
-      # continueOnError: true
+        npm install snyk -g
+        pip3 install -r requirements.txt
+        export SNYK_TOKEN=$env:MY_MAPPED_ENV_VAR
+        snyk test --severity-threshold=high
+        # docker run --rm -e SNYK_TOKEN=$(snyk-token) -v "$(pwd):/project" snyk/snyk-cli:docker test --packages-folder=/project/requirements.txt --severity-threshold=high
+      env:
+        MY_MAPPED_ENV_VAR: $(sny-token)
+      displayName: dependency-check-2
+      continueOnError: true
     
     # - task: SnykSecurityScan@1
     #   displayName: dependency-check-2
