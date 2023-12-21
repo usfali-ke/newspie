@@ -60,10 +60,10 @@ stages:
         # export SNYK_TOKEN=$env:MY_MAPPED_ENV_VAR
         # snyk test --severity-threshold=high
         docker run --rm -e SNYK_TOKEN=$(snyk-token) -v "$(pwd):/project" snyk/snyk-cli:docker test --packages-folder=/project/requirements.txt --severity-threshold=high
-      env:
-        MY_MAPPED_ENV_VAR: $(sny-token)
-      displayName: dependency-check-2
-      continueOnError: true
+      # env:
+      #   MY_MAPPED_ENV_VAR: $(sny-token)
+      # displayName: dependency-check-2
+      # continueOnError: true
     
     # - task: SnykSecurityScan@1
     #   displayName: dependency-check-2
