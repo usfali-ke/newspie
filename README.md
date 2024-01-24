@@ -1,4 +1,4 @@
-# NewsPie #
+# NewsPie  - Testing SonarCloud scan #
 A minimalistic news aggregator built with [Flask](https://www.palletsprojects.com/p/flask/) and powered by [News API](https://newsapi.org/).
 
 ![Demo!](https://raw.githubusercontent.com/skamieniarz/newspie/master/static/demo.gif)
